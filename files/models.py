@@ -1424,7 +1424,9 @@ class Playlist(models.Model):
             return pm.media.thumbnail_url
         return None
 
-
+    class Meta:
+        ordering = ["-add_date"]  # This will show newest playlists first
+        
 class PlaylistMedia(models.Model):
     media = models.ForeignKey(Media, on_delete=models.CASCADE)
     playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE)

@@ -40,29 +40,29 @@ rm -rf tmp ffmpeg-release-amd64-static.tar.xz
 echo "ffmpeg installed to /usr/local/bin"
 
 read -p "Enter portal URL, or press enter for localhost : " FRONTEND_HOST
-read -p "Enter portal name, or press enter for 'MediaCMS : " PORTAL_NAME
+read -p "Enter portal name, or press enter for 'CinemataCMS : " PORTAL_NAME
 
-[ -z "$PORTAL_NAME" ] && PORTAL_NAME='MediaCMS'
+[ -z "$PORTAL_NAME" ] && PORTAL_NAME='CinemataCMS'
 [ -z "$FRONTEND_HOST" ] && FRONTEND_HOST='localhost'
 
-echo 'Creating database to be used in MediaCMS'
+echo 'Creating database to be used in CinemataCMS'
 
 su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
 su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
 su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
 
-echo 'Creating python virtualenv on /home/mediacms.io'
+echo 'Creating python virtualenv on /home/cinemata'
 
-cd /home/mediacms.io
+cd /home/cinemata
 virtualenv . --python=python3
-source  /home/mediacms.io/bin/activate
-cd mediacms
+source  /home/cinemata/bin/activate
+cd cinematacms
 pip install -r requirements.txt
 cd .. && git clone https://github.com/ggerganov/whisper.cpp.git
 cd whisper.cpp/
 bash ./models/download-ggml-model.sh large-v3
 make
-cd ../mediacms
+cd ../cinematacms
 
 SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
 
@@ -94,7 +94,7 @@ echo "from users.models import User; User.objects.create_superuser('admin', 'adm
 
 echo "from django.contrib.sites.models import Site; Site.objects.update(name='$FRONTEND_HOST', domain='$FRONTEND_HOST')" | python manage.py shell
 
-chown -R www-data. /home/mediacms.io/
+chown -R www-data. /home/cinemata/
 cp deploy/celery_long.service /etc/systemd/system/celery_long.service && systemctl enable celery_long && systemctl start celery_long
 cp deploy/celery_short.service /etc/systemd/system/celery_short.service && systemctl enable celery_short && systemctl start celery_short
 cp deploy/celery_beat.service /etc/systemd/system/celery_beat.service && systemctl enable celery_beat &&systemctl start celery_beat
@@ -145,12 +145,17 @@ fi
 
 # Bento4 utility installation, for HLS
 
-cd /home/mediacms.io/mediacms
+cd /home/cinemata/cinematacms
 wget http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
 unzip Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
-mkdir -p /home/mediacms.io/mediacms/media_files/hls
+mkdir -p /home/cinemata/cinematacms/media_files/hls
+
+# Create user logos directory and default avatar
+echo "Creating default user avatar..."
+mkdir -p /home/cinemata/cinematacms/media_files/userlogos
+wget -O /home/cinemata/cinematacms/media_files/userlogos/user.jpg https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y
 
 # last, set default owner
-chown -R www-data. /home/mediacms.io/
+chown -R www-data. /home/cinemata/
 
 echo 'Cinemata installation completed, open browser on http://'"$FRONTEND_HOST"' and login with user admin and password '"$ADMIN_PASS"''

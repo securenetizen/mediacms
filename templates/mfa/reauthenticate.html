@@ -1,0 +1,107 @@
+{% extends "account/base_reauthenticate.html" %}
+{% load i18n %}
+{% load allauth %}
+{% block reauthenticate_content %}
+    {% element p %}
+        {% blocktranslate %}Enter an authenticator code:{% endblocktranslate %}
+    {% endelement %}
+        
+    <form name="code" method="POST" action="{% url 'mfa_reauthenticate' %}">
+      {% csrf_token %}
+
+      <div class="hidden-input-container">
+        {% element fields form=form unlabeled=True %}
+        {% endelement %}
+      </div>
+
+      <div class="otp-input-container">
+        <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+      </div>
+
+      <button type="submit" class="primaryAction">
+        {% trans "Confirm" %}
+      </button>
+    </form>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // OTP-specific
+    const originalInput = document.querySelector('.otp-hidden-input');
+    const otpDigits = document.querySelectorAll('.otp-digit');
+    
+    // Focus the first input on page load
+    otpDigits[0].focus();
+    
+    // Update the original input value when OTP digits change
+    function updateOriginalInput() {
+      let combinedValue = '';
+      otpDigits.forEach(digit => {
+        combinedValue += digit.value;
+      });
+      originalInput.value = Number(combinedValue);
+    }
+    
+    // Add event listeners to each OTP digit input
+    otpDigits.forEach((digit, index) => {
+      // Handle input
+      digit.addEventListener('input', function(e) {
+        // Allow only numbers
+        this.value = this.value.replace(/[^0-9]/g, '');
+        
+        // Move to next input if a digit was entered
+        if (this.value && index < otpDigits.length - 1) {
+          otpDigits[index + 1].focus();
+        }
+        
+        updateOriginalInput();
+      });
+      
+      // Handle backspace and arrow keys
+      digit.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !this.value && index > 0) {
+          // Move to previous input on backspace if current is empty
+          otpDigits[index - 1].focus();
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+          // Move to previous input on left arrow
+          otpDigits[index - 1].focus();
+        } else if (e.key === 'ArrowRight' && index < otpDigits.length - 1) {
+          // Move to next input on right arrow
+          otpDigits[index + 1].focus();
+        }
+      });
+      
+      // Select all text on focus
+      digit.addEventListener('focus', function() {
+        this.select();
+      });
+    });
+    
+    // Handle paste events (paste into first input)
+    otpDigits[0].addEventListener('paste', function(e) {
+      e.preventDefault();
+      
+      // Get pasted data
+      let pastedData = (e.clipboardData || window.clipboardData).getData('text');
+      
+      // Remove non-numeric characters
+      pastedData = pastedData.replace(/[^0-9]/g, '');
+      
+      // Fill the inputs with pasted data
+      for (let i = 0; i < Math.min(pastedData.length, otpDigits.length); i++) {
+        otpDigits[i].value = pastedData[i];
+      }
+      
+      // Focus the next empty input or the last one
+      const nextEmptyIndex = Math.min(pastedData.length, otpDigits.length - 1);
+      otpDigits[nextEmptyIndex].focus();
+      
+      updateOriginalInput();
+    });
+  })
+</script>
+{% endblock %}

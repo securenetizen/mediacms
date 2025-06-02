@@ -3,6 +3,11 @@ from django.conf import settings
 from .methods import can_upload_media, is_mediacms_editor, is_mediacms_manager
 from .models import HomepagePopup, TopMessage
 
+# NOTE: context_processors.py can be considered as a dumping ground of sorts for 
+# multiple variables that, as declared, are then instantiated to be referenced
+# as one of multiple contexts in the settings.py's context_processors attribute.
+# for frontend developers, think of this is a way to globally declare variables
+# that can be used in the templates
 
 def stuff(request):
     ret = {}
@@ -59,4 +64,5 @@ def stuff(request):
     ret["POPUP_URL"] = popup_url
     if request.user.is_superuser:
         ret["DJANGO_ADMIN_URL"] = settings.DJANGO_ADMIN_URL
+    ret["MFA_REQ_DATE"] = 'April 21, 2025'
     return ret

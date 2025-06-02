@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load allauth i18n %}
+{% block headtitle %}| Activate Authenticator App{% endblock headtitle %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+  <div class="alert-banner">
+    {% include "account/messages/mfa_reminder.txt" %}
+  </div>
+  <div class="user-action-form-inner">
+    
+    
+    {% if form.errors %}
+      <div class="alert error" style="margin-block:1em;">
+        {% for field, errors in form.errors.items %}
+          <p>{% for error in errors %}{{ error }}{% endfor %}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div id="step-1-container">
+      <h1>Step 1: Set up an authenticator app</h1>
+  
+      <ul>
+        <li>Google Authenticator</li>
+        <li>Microsoft Authenticator</li>
+        <li>Authy</li>
+      </ul>
+  
+    <div class="qr-code-div">
+      {% element img src=totp_svg_data_uri alt=form.secret tags="mfa,totp,qr" %}
+      {% endelement %}
+    </div>
+    <div id="activate-totp-step-1-description-reminders" style="display: block;">
+      <p style="text-align: center;">Scan this QR code with your authenticator app.</p>
+      
+      <p style="margin: 0">Can't scan the QR code?</p>
+      <p style="margin: 0">Enter this code manually in your app:</p>
+    </div>
+
+    {% element field id="authenticator_secret" type="text" value=form.secret disabled=True %}
+        {% slot label %}
+            Authenticator secret key
+        {% endslot %}
+        {% slot help_text %}
+            You can save this secret key for backup if you need to reinstall your authenticator app later.
+        {% endslot %}
+    {% endelement %}
+
+      <div class="button-container">
+        <button id="nextButton" type="button" class="action-button">Next</button>
+      </div>
+    </div>
+
+    <div id="step-2-container" style="display: none;">
+      <h1>Step 2: Verify your setup</h1>
+
+      <form name="code" method="POST" action="{% url 'mfa_activate_totp' %}">
+        {% csrf_token %}
+        
+        <div class="hidden-input-container">
+          {% element fields form=form %}
+          {% endelement %}
+        </div>
+
+        <!-- OTP input boxes -->
+        <div class="otp-input-container">
+          <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        </div>
+        
+        <div class="button-container">
+          <button id="backButton" type="button" class="secondaryAction">Back</button>
+          <button  type="submit" class="primaryAction">Verify your code</button>
+        </div>
+      </form>
+
+  
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const step1Container = document.getElementById("step-1-container");
+    const step2Container = document.getElementById("step-2-container");
+    const nextButton = document.getElementById("nextButton");
+    const backButton = document.getElementById("backButton");
+
+    // Handle navigation between steps
+    nextButton.addEventListener("click", function() {
+      step1Container.style.display = "none";
+      step2Container.style.display = "block";
+    });
+    
+    backButton.addEventListener("click", function() {
+      step2Container.style.display = "none";
+      step1Container.style.display = "block";
+    });
+
+    // OTP-specific
+    const originalInput = document.querySelector('.otp-hidden-input');
+    const otpDigits = document.querySelectorAll('.otp-digit');
+    
+    // Focus the first input on page load
+    otpDigits[0].focus();
+    
+    // Update the original input value when OTP digits change
+    function updateOriginalInput() {
+      let combinedValue = '';
+      otpDigits.forEach(digit => {
+        combinedValue += digit.value;
+      });
+      originalInput.value = Number(combinedValue);
+    }
+    
+    // Add event listeners to each OTP digit input
+    otpDigits.forEach((digit, index) => {
+      // Handle input
+      digit.addEventListener('input', function(e) {
+        // Allow only numbers
+        this.value = this.value.replace(/[^0-9]/g, '');
+        
+        // Move to next input if a digit was entered
+        if (this.value && index < otpDigits.length - 1) {
+          otpDigits[index + 1].focus();
+        }
+        
+        updateOriginalInput();
+      });
+      
+      // Handle backspace and arrow keys
+      digit.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !this.value && index > 0) {
+          // Move to previous input on backspace if current is empty
+          otpDigits[index - 1].focus();
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+          // Move to previous input on left arrow
+          otpDigits[index - 1].focus();
+        } else if (e.key === 'ArrowRight' && index < otpDigits.length - 1) {
+          // Move to next input on right arrow
+          otpDigits[index + 1].focus();
+        }
+      });
+      
+      // Select all text on focus
+      digit.addEventListener('focus', function() {
+        this.select();
+      });
+    });
+    
+    // Handle paste events (paste into first input)
+    otpDigits[0].addEventListener('paste', function(e) {
+      e.preventDefault();
+      
+      // Get pasted data
+      let pastedData = (e.clipboardData || window.clipboardData).getData('text');
+      
+      // Remove non-numeric characters
+      pastedData = pastedData.replace(/[^0-9]/g, '');
+      
+      // Fill the inputs with pasted data
+      for (let i = 0; i < Math.min(pastedData.length, otpDigits.length); i++) {
+        otpDigits[i].value = pastedData[i];
+      }
+      
+      // Focus the next empty input or the last one
+      const nextEmptyIndex = Math.min(pastedData.length, otpDigits.length - 1);
+      otpDigits[nextEmptyIndex].focus();
+      
+      updateOriginalInput();
+    });
+  })
+</script>
+{% endblock innercontent %}

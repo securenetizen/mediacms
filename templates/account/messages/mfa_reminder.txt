@@ -1,0 +1,2 @@
+{% load i18n %}
+{% blocktrans %}Adding 2FA provides an extra layer of security to your account. You'll need to enter a verification code in addition to your password when signing in.{% endblocktrans %}

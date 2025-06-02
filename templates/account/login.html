@@ -4,7 +4,19 @@
 
 {% block innercontent %}
 <div class="user-action-form-wrap">
+	{% if MFA_REQ_DATE %}
+		<div class="alert-banner">
+			We've updated our security requirements. For enhanced account protection,
+			Two-Factor Authentication will be required for admin users starting {{ MFA_REQ_DATE }}.
+		</div>
+	{% else %}
+		<div class="alert-banner">
+			We've updated our security requirements. For enhanced account protection,
+			Two-Factor Authentication will be required for admin users starting [date].
+		</div>
+	{% endif %}
     <div class="user-action-form-inner">
+
 
 		<h1>Sign In</h1>
 
@@ -17,8 +29,14 @@
 		  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
 		  {% endif %}
 		  <button class="primaryAction" type="submit">Sign In</button>
-		  <a class="button secondaryAction" href="{% url 'account_reset_password' %}">Forgot Password?</a>
 		</form>
+
+		<hr />
+
+		{% url 'account_request_login_code' as account_code_url %}
+		<span>
+			<a href={{account_code_url}}>Sign in with a code</a>
+		</span>
 
     </div>
 </div>

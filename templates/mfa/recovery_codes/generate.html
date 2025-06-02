@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load allauth %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+  <div class="user-action-form-inner">
+
+    <h1>
+      {% translate "Recovery Codes" %}
+    </h1>
+
+    <p>
+      {% blocktranslate %}You are about to generate a new set of recovery codes for your account.{% endblocktranslate %}
+      {% if unused_code_count %}
+          {% blocktranslate %}This action will invalidate your existing codes.{% endblocktranslate %}
+      {% endif %}
+      {% blocktranslate %}Are you sure?{% endblocktranslate %}
+    </p>
+
+    {% url 'mfa_generate_recovery_codes' as action_url %}
+    {% element form method="post" action=action_url no_visible_fields=True %}
+        {% slot body %}
+            {% csrf_token %}
+            {{ form.as_p }}
+        {% endslot %}
+        {% slot actions %}
+            {% setvar tags %}
+                {% if unused_code_count %}
+                    danger
+                {% else %}
+                {% endif %}
+            {% endsetvar %}
+            <button type="submit" class="primaryAction">
+              {% trans "Generate" %}
+            </button>
+        {% endslot %}
+    {% endelement %}
+
+  </div>
+</div>
+{% endblock %}

@@ -1,7 +1,44 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
+from allauth.mfa.base.forms import AuthenticateForm, ReauthenticateForm
+from allauth.mfa.totp.forms import ActivateTOTPForm
 
+from allauth.account import app_settings
 from .models import Channel, User
 
+class CustomAuthenticateForm(AuthenticateForm):
+    """This form is fetched for standard authentication,
+    and represents both TOTP authenticator code and recovery codes."""
+    
+    code = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": _(""), 
+                "class": "otp-hidden-input",
+                "inputmode": "numeric"
+            },
+        )
+    )
+
+class CustomActivateTOTPForm(ActivateTOTPForm):
+    """This form is fetched when the user is
+    setting up authentication"""
+
+    code = forms.CharField(
+        max_length=6,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": _(""), 
+                "autocomplete": "one-time-code",
+                "class": "otp-hidden-input",
+                "inputmode": "numeric",
+                "pattern": "[0-9]{6}"
+            },
+        ),
+    )
+
+class CustomReauthenticateTOTPForm(CustomAuthenticateForm):
+    pass
 
 class Date_Input(forms.DateInput):
     input_type = "date"
@@ -9,7 +46,6 @@ class Date_Input(forms.DateInput):
 
 class MultipleSelect(forms.CheckboxSelectMultiple):
     input_type = "checkbox"
-
 
 class SignupForm(forms.Form):
     name = forms.CharField(max_length=100, label="Name")

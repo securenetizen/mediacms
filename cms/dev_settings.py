@@ -81,7 +81,7 @@ WSGI_APPLICATION = "cms.wsgi.application"
 AUTH_PASSWORD_VALIDATORS = [
     {
         # Checks the similarity between the password and a set of attributes of the user.
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "users.password_validators.CustomUserAttributeSimilarityValidator",
         "OPTIONS": {
             "user_attributes": ("username", "email", "first_name", "last_name"),
             "max_similarity": 0.7,
@@ -89,18 +89,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         # Checks whether the password meets a minimum length.
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": "users.password_validators.CustomMinimumLengthValidator",
         "OPTIONS": {
             "min_length": 14,
         },
     },
     {
         # Checks whether the password occurs in a list of common passwords
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "users.password_validators.CustomCommonPasswordValidator",
     },
     {
         # Checks whether the password ’isnt entirely numeric
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "users.password_validators.CustomNumericPasswordValidator",
     },
 ]
 
@@ -315,7 +315,7 @@ UNLISTED_WORKFLOW_MAKE_PUBLIC_UPON_COMMENTARY_ADD = False
 UNLISTED_WORKFLOW_MAKE_PRIVATE_UPON_COMMENTARY_DELETE = False
 
 MP4HLS_COMMAND = (
-    "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/mp4hls"
+    "/home/cinemata/cinematacms/Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/mp4hls"
 )
 
 
@@ -379,10 +379,8 @@ INSTALLED_APPS.append("corsheaders")
 
 PYSUBS_COMMAND = "pysubs2"
 
-WHISPER_CPP_COMMAND = (
-    "/home/user/Desktop/InLaborium/HelloWorld/cinemata/whisper.cpp/main"
-)
-WHISPER_CPP_MODEL = "/home/user/Desktop/InLaborium/HelloWorld/cinemata/whisper.cpp/models/ggml-medium.bin"
+WHISPER_CPP_COMMAND = "/home/cinemata/whisper.cpp/build/bin/main"
+WHISPER_CPP_MODEL = "/home/cinemata/whisper.cpp/models/ggml-large-v3.bin"
 
 DJANGO_ADMIN_URL = "adminx/"
 ALLOWED_MEDIA_UPLOAD_TYPES = ['video']

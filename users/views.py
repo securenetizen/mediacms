@@ -129,6 +129,12 @@ def edit_user(request, username):
         form = UserForm(request.user, instance=user)
     return render(request, "cms/user_edit.html", {"form": form})
 
+@login_required
+def mfa_success_message(request):
+    user = get_user(request.user)
+    if not user or (user != request.user and not is_mediacms_manager(request.user)):
+        return HttpResponseRedirect("/")
+    return render(request, "mfa/totp/success.html")
 
 def view_channel(request, friendly_token):
     context = {}

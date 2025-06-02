@@ -1,0 +1,23 @@
+{% extends "account/base_reauthenticate.html" %}
+{% load allauth %}
+{% load i18n %}
+{% block reauthenticate_content %}
+    {% element p %}
+        {% blocktranslate %}Enter your password:{% endblocktranslate %}
+    {% endelement %}
+    {% url 'account_reauthenticate' as action_url %}
+    <form name="password" method="POST" action="{% url 'account_reauthenticate' %}">
+      {% csrf_token %}
+
+      {% comment %}
+        Since this is overriding the normal form behavior of the password input,
+        PASSWORD_INPUT_RENDER_VALUE may possibly not behave accordingly for this form.
+      {% endcomment %}
+
+      <input name="password" placeholder="Password" type="password" autocomplete="current-password" />
+      {{ redirect_field }}
+      <button class="primaryAction">
+        {% trans "Confirm" %}
+      </button>
+    </form>
+{% endblock %}

@@ -44,6 +44,13 @@ urlpatterns = [
         views.contact_user,
         name="api_contact_user",
     ),
+
+    # success-mfa
+    re_path(
+        r"^accounts/2fa/totp/success",
+        views.mfa_success_message,
+        name="mfa_success"
+    )
 ]
 
 if settings.DEBUG:

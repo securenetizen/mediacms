@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    'allauth.mfa',
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -83,7 +84,7 @@ WSGI_APPLICATION = "cms.wsgi.application"
 AUTH_PASSWORD_VALIDATORS = [
     {
         # Checks the similarity between the password and a set of attributes of the user.
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "users.password_validators.CustomUserAttributeSimilarityValidator",
         "OPTIONS": {
             "user_attributes": ("username", "email", "first_name", "last_name"),
             "max_similarity": 0.7,
@@ -91,18 +92,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         # Checks whether the password meets a minimum length.
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": "users.password_validators.CustomMinimumLengthValidator",
         "OPTIONS": {
             "min_length": 14,
         },
     },
     {
         # Checks whether the password occurs in a list of common passwords
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "users.password_validators.CustomCommonPasswordValidator",
     },
     {
         # Checks whether the password ’isnt entirely numeric
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "users.password_validators.CustomNumericPasswordValidator",
     },
 ]
 
@@ -140,6 +141,10 @@ DATABASES = {
         "PORT": "5432",
         "USER": "mediacms",
         "PASSWORD": "mediacms",
+        "TEST": {
+          "MIRROR": "default", # mirror - default enables you to work on the database's copy
+          "MIGRATE": False
+        }
     }
 }
 
@@ -161,6 +166,10 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 SITE_ID = 1
+
+# Security improvements
+SESSION_COOKIE_AGE = 28800  # 8 hours in seconds
+CSRF_COOKIE_AGE = None  # Make CSRF token session-based
 
 STATIC_URL = "/static/"  #  where js/css files are stored on the filesystem
 MEDIA_ROOT = BASE_DIR + "/media_files/"  #  where uploaded + encoded media are stored
@@ -233,6 +242,20 @@ ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+
+# MFA custom configurations here
+MFA_FORMS = {
+  'authenticate': 'users.forms.CustomAuthenticateForm',
+  'reauthenticate': 'users.forms.CustomReauthenticateTOTPForm',
+  'activate_totp': 'users.forms.CustomActivateTOTPForm'
+}
+MFA_RECOVERY_CODE_COUNT = 10
+MFA_RECOVERY_CODE_DIGITS = 12
+MFA_TOTP_TOLERANCE = 120
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
+MFA_TOTP_ISSUER = "Cinemata"
+
 # registration won't be open, might also consider to remove links for register
 USERS_CAN_SELF_REGISTER = True
 
@@ -252,6 +275,9 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 50,
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
     ],
 }
 
@@ -284,7 +310,7 @@ RUNNING_STATE_STALE = 60 * 60 * 2
 # to get to private state automatically
 REPORTED_TIMES_THRESHOLD = 10
 
-MEDIA_IS_REVIEWED = False  # whether an admin needs to review a media file.
+MEDIA_IS_REVIEWED = True  # whether an admin needs to review a media file.
 # By default consider this is not needed.
 # If set to False, then each new media need be reviewed
 
@@ -373,7 +399,7 @@ UNLISTED_WORKFLOW_MAKE_PUBLIC_UPON_COMMENTARY_ADD = False
 UNLISTED_WORKFLOW_MAKE_PRIVATE_UPON_COMMENTARY_DELETE = False
 
 MP4HLS_COMMAND = (
-    "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/mp4hls"
+    "/home/cinemata/cinematacms/Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/mp4hls"
 )
 
 
@@ -427,11 +453,12 @@ DJANGO_ADMIN_URL = "admin/"
 from .local_settings import *
 ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
 
-WHISPER_COMMAND = "/home/mediacms.io/bin/whisper"
+WHISPER_COMMAND = "/home/cinemata/bin/whisper"
 WHISPER_SIZE = "base"
 
-WHISPER_CPP_COMMAND = "/home/mediacms.io/whisper.cpp/main"
-WHISPER_CPP_MODEL = "/home/mediacms.io/whisper.cpp/models/ggml-large-v3.bin"
+WHISPER_CPP_COMMAND = "/home/cinemata/whisper.cpp/build/bin/main"
+WHISPER_CPP_MODEL = "/home/cinemata/whisper.cpp/models/ggml-large-v3.bin"
+
 
 
 ALLOWED_MEDIA_UPLOAD_TYPES = ['video']

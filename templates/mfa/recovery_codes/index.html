@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load allauth %}
+
+{% block headtitle %} | Recovery Codes {% endblock headtitle %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+  <div class="user-action-form-inner">
+
+    {% if "accounts/2fa/totp/activate/" in request.META.HTTP_REFERER %}
+      <h1>Step 3: Save your backup codes</h1>
+    {% else %}
+      <h1>Backup Codes</h1>
+    {% endif %}
+
+    <p>If you lose access to your authenticator app, you can use these 
+      backup codes to sign in. Each code can only be used once.
+    </p>
+    {% element p %}
+        {% blocktranslate count unused_count=unused_codes|length %}There is {{ unused_count }} out of {{ total_count }} recovery codes available.{% plural %}There are {{ unused_count }} out of {{ total_count }} recovery codes available.{% endblocktranslate %}
+    {% endelement %}
+
+    <div class="recovery-code-div">
+      <div class="recovery-codes">
+        {% for code in unused_codes %}
+          <span>{{ code }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="recovery-code-buttons">
+      {% if unused_codes %}
+        {% url 'mfa_download_recovery_codes' as download_url %}
+        <a href="{% url 'mfa_download_recovery_codes' %}">
+          {% translate "Download codes" %}
+        </a>
+      {% endif %}
+
+      
+      {% url 'mfa_generate_recovery_codes' as generate_url %}
+      <a href="{% url 'mfa_generate_recovery_codes' %}">
+        {% translate "Generate new codes" %}
+      </a>
+    </div>
+
+    
+    {% if "accounts/2fa/totp/activate/" in request.META.HTTP_REFERER %}
+      <hr style="margin-bottom:0;" />
+      <form method="GET" action="/accounts/2fa/totp/success" 
+      style="display:flex;flex-direction: row-reverse;margin-top:0;">
+        <button class="primaryAction">
+          Complete Setup
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .recovery-code-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .recovery-code-div {
+    display: flex; 
+    justify-content: center;
+    margin-block: 1.25em;
+  }
+
+  .recovery-codes {
+    display: grid;
+    grid-template-columns: auto auto;
+    padding: 1em;
+    text-align: center;
+    width: 30vw;
+    border: 1px solid grey;
+    color: #999;
+  }
+</style>
+{% endblock %}
