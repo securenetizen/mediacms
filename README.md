@@ -141,7 +141,7 @@ As root, clone the repository on /home/mediacms.io and run install.sh:
 ```
 # cd /home
 # mkdir mediacms.io && cd mediacms.io
-# git clone https://github.com/EngageMedia-video/cinemata mediacms && cd mediacms
+# git clone https://github.com/securenetizen/mediacms mediacms && cd mediacms
 # chmod +x install.sh
 # ./install.sh
 ```
